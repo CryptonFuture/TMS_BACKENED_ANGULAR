@@ -7,9 +7,27 @@ import { IUser } from '../../types/user.types'
 import mongoose from 'mongoose'
 
 const register = async (req: Request, res: Response): Promise<Response> => {
-    const { firstname, lastname, email, password, confirmPass }: IUser = req.body
+    const { 
+        name, 
+        email, 
+        password, 
+        confirmPass, 
+        phone, 
+        address, 
+        designation, 
+        department, 
+        joiningDate, 
+        description }: IUser = req.body
 
-    if (!firstname || !lastname || !email || !password || !confirmPass) {
+    if (!name || 
+        !email || 
+        !password || 
+        !confirmPass || 
+        !phone || 
+        !address || 
+        !designation || 
+        !department || 
+        !joiningDate) {
         return res.status(400).json({
             success: false,
             error: 'Please fill out all fields'
@@ -48,11 +66,16 @@ const register = async (req: Request, res: Response): Promise<Response> => {
     const hashConfirmPass = await bcrypt.hash(confirmPass, 10)
 
     const user = new User({
-        firstname,
-        lastname,
+        name,
         email,
         password: hashPassword,
-        confirmPass: hashConfirmPass
+        confirmPass: hashConfirmPass,
+        phone,
+        address,
+        designation,
+        department,
+        joiningDate,
+        description
     })
 
     const userData = await user.save()

@@ -1,9 +1,14 @@
 export interface IUser {
-  firstname: string;
-  lastname: string;
+  name: string;
   email: string;
   password: string;
   confirmPass: string;
+  phone: string;
+  address: string;
+  designation: string;
+  department: string;
+  joiningDate: Date;
+  description: string;
   accessToken?: string | null;
   refreshToken?: string | null;
   active?: boolean;
