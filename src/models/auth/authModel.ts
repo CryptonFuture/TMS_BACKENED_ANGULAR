@@ -4,12 +4,7 @@ import { IUser } from "../../types/user.types";
 export interface IUserDocument extends IUser, Document {}
 
 const authSchema: Schema = new Schema({
-    firstname: {
-        type: String,
-        required: true
-    },
-
-    lastname: {
+    name: {
         type: String,
         required: true
     },
@@ -27,6 +22,35 @@ const authSchema: Schema = new Schema({
     confirmPass: {
         type: String,
         required: true
+    },
+
+    phone: {
+        type: String,
+        required: true
+    },
+
+    address: {
+        type: String,
+        required: true 
+    },
+
+    designation: {
+        type: String,
+        required: true 
+    },
+
+    department: {
+        type: String,
+        required: true 
+    },
+
+    joiningDate: {
+        type: Date,
+        required: true 
+    },
+
+    description: {
+        type: String,
     },
 
     accessToken: {
