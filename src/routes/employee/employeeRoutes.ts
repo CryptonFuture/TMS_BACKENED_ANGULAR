@@ -4,6 +4,6 @@ import { getActiveEmp, getInActiveEmp } from '../../controllers/employee/employe
 const router = express.Router()
 
 router.get('/getActiveEmp', getActiveEmp)
-router.get('/getActiveEmp', getInActiveEmp)
+router.get('/getInActiveEmp', getInActiveEmp)
 
 export default router
