@@ -26,6 +26,31 @@ const editEmpById = async (req: Request, res: Response): Promise<Response> => {
     })
 }
 
+const viewEmpById = async (req: Request, res: Response): Promise<Response> => {
+   const { id } = req.params
+
+   if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID parameter is missing',
+      });
+    }
+
+    const user = await User.findById(id)
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            error: "No user Id found"
+        })
+    }
+
+    return res.status(200).json({
+        success: true,
+        data: user
+    })
+}
+
 const getActiveEmp = async (req: Request, res: Response): Promise<Response> => {
    try {
      const user = await User.find({active: true})
@@ -188,5 +213,6 @@ export {
     toggleStatus,
     toggleAdmin,
     deleteEmp,
-    deleteUsers
+    deleteUsers,
+    viewEmpById
 }
