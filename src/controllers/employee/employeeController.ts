@@ -52,8 +52,22 @@ const viewEmpById = async (req: Request, res: Response): Promise<Response> => {
 }
 
 const getActiveEmp = async (req: Request, res: Response): Promise<Response> => {
+ 
    try {
-     const user = await User.find({active: true})
+    const search = req.query.search as string;
+
+     const filter: any = { active: true };
+
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } }, 
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+        { address: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+     const user = await User.find(filter)
 
      if (!user || user.length === 0) {
         return res.status(404).json({
@@ -104,17 +118,29 @@ const toggleStatus = async (req: Request, res: Response) => {
         return res.status(400).json({ success: false, error: 'ID is required' });
     }
 
-    const emp = await User.findByIdAndUpdate(
-        id,
-        {active: active},
-        {new: true}
-    )
+    const emp = await User.findById(id);
 
     if (!emp) {
       return res.status(404).json({ success: false, error: 'Employee not found' });
     }
 
-    res.status(200).json({ success: true, message: 'Employee is now Active.', data: emp });
+     if (active === true && emp.is_deleted === false) {
+      return res.status(403).json({
+        success: false,
+        error: 'Cannot activate a deleted employee account'
+      });
+    }
+
+    const updatedUser  = await User.findByIdAndUpdate(
+        id,
+        {active: active},
+        {new: true}
+    )
+
+    const statusMsg = active ? 'Employee is now Active.' : 'Employee is now Inactive.';
+
+
+    res.status(200).json({ success: true, message: statusMsg, data: updatedUser  });
 }
 
 const toggleAdmin = async (req: Request, res: Response) => {
