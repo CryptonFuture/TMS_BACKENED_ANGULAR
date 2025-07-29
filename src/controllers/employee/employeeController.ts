@@ -1,3 +1,4 @@
+import validator from 'validator';
 import User from '../../models/auth/authModel'
 import { Request, Response } from 'express'
 
@@ -232,6 +233,47 @@ const deleteUsers = async (req: Request, res: Response): Promise<Response> => {
     }
 }
 
+const updateUser = async (req: Request, res: Response) => {
+    const { id } = req.params
+
+    const { phone, address, designation, department, description, active, is_admin } = req.body;
+
+    if (!phone || !address || !designation || !department) {
+        return res.status(400).json({
+            success: false,
+            error: 'Please fill out all fields',
+        });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+        { _id: id },
+        {
+            phone,
+            address,
+            designation,
+            department,
+            description,
+            active,
+            is_admin
+        },
+        { new: true }
+    );
+
+    if (!updatedUser) {
+        return res.status(404).json({
+            success: false,
+            error: 'no record found',
+        });
+    }
+
+
+    return res.status(200).json({
+        success: true,
+        message: "User updated successfully",
+        data: updatedUser,
+    });
+}
+
 export {
     getActiveEmp,
     getInActiveEmp,
@@ -240,5 +282,6 @@ export {
     toggleAdmin,
     deleteEmp,
     deleteUsers,
-    viewEmpById
+    viewEmpById,
+    updateUser
 }
