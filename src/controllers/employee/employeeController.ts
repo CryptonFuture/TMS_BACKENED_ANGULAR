@@ -274,8 +274,41 @@ const updateUser = async (req: Request, res: Response) => {
     });
 }
 
+const employeeAllCount = async (req: Request, res: Response): Promise<Response>  => {
+   
+    const empAllcount = await User.countDocuments()
+
+    return res.status(200).json({
+        success: true,
+        count: empAllcount
+    })
+}
+
+const employeeActiveCount = async (req: Request, res: Response): Promise<Response>  => {
+   
+    const empActiveCount = await User.countDocuments({active: true})
+
+    return res.status(200).json({
+        success: true,
+        count: empActiveCount
+    })
+}
+
+const employeeInActiveCount = async (req: Request, res: Response): Promise<Response>  => {
+   
+    const empInActiveCount = await User.countDocuments({active: false})
+
+    return res.status(200).json({
+        success: true,
+        count: empInActiveCount
+    })
+}
+
 export {
     getActiveEmp,
+    employeeAllCount,
+    employeeActiveCount,
+    employeeInActiveCount,
     getInActiveEmp,
     editEmpById,
     toggleStatus,
