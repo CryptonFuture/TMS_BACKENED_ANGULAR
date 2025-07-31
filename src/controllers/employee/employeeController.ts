@@ -1,6 +1,16 @@
 import validator from 'validator';
 import User from '../../models/auth/authModel'
 import { Request, Response } from 'express'
+import { FilterQuery } from 'mongoose'
+
+interface QueryParams {
+  search?: string;
+  active?: string;
+  date?: string;
+  page?: any,
+  limit?: any,
+  sort?: any
+}
 
 const editEmpById = async (req: Request, res: Response): Promise<Response> => {
    const { id } = req.params
@@ -52,23 +62,55 @@ const viewEmpById = async (req: Request, res: Response): Promise<Response> => {
     })
 }
 
-const getActiveEmp = async (req: Request, res: Response): Promise<Response> => {
- 
+const getActiveEmp = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
+
+  const {page = 1, limit = 10, search = "", sort = "", active, date } = req.query;
+
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const searchQuery: FilterQuery<typeof User> = { active: true };
+
+  if (search) {
+    searchQuery.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { phone: { $regex: search, $options: "i" } },
+      { address: { $regex: search, $options: "i" } }
+    ];
+  }
+
+  if (active) {
+    searchQuery.active = active === 'true';
+  }
+
+  if (date) {
+    const selectedDate = new Date(date);
+    const nextDate = new Date(date);
+    nextDate.setDate(selectedDate.getDate() + 1);
+
+    searchQuery.createdAt = {
+      $gte: selectedDate,
+      $lt: nextDate
+    };
+
+  }
+
    try {
-    const search = req.query.search as string;
+     const skip = (pageNumber - 1) * limitNumber;
 
-     const filter: any = { active: true };
+      let sortOptions: any = {};
+      if (sort) {
+          const [field, order] = sort.split(":");
+          sortOptions[field] = order === "desc" ? -1 : 1;
+      }
 
-    if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } }, 
-        { email: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } },
-        { address: { $regex: search, $options: 'i' } }
-      ];
-    }
+     const user = await User.find(searchQuery)
+     .sort(sortOptions)
+     .skip(skip)
+     .limit(limitNumber)
 
-     const user = await User.find(filter)
+     const totalRecords = await User.countDocuments(searchQuery);
 
      if (!user || user.length === 0) {
         return res.status(404).json({
@@ -79,7 +121,13 @@ const getActiveEmp = async (req: Request, res: Response): Promise<Response> => {
 
     return res.status(200).json({
         success: true,
-        data: user
+        data: user,
+        pagination: {
+          totalRecords,
+          currentPage: pageNumber,
+          totalPages: Math.ceil(totalRecords / limitNumber),
+          limit: limitNumber
+        }
     })    
    } catch (error) {
      return res.status(500).json({
@@ -89,9 +137,46 @@ const getActiveEmp = async (req: Request, res: Response): Promise<Response> => {
    }
 }
 
-const getInActiveEmp = async (req: Request, res: Response): Promise<Response> => {
+const getInActiveEmp = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
+  const { page = 1, limit = 10, search = "", active, date } = req.query;
+
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const searchQuery: FilterQuery<typeof User> = { active: false };
+
+  if (search) {
+    searchQuery.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { phone: { $regex: search, $options: "i" } },
+      { address: { $regex: search, $options: "i" } }
+    ];
+  }
+
+  if (active) {
+    searchQuery.active = active === 'true';
+  }
+
+  if (date) {
+    const selectedDate = new Date(date);
+    const nextDate = new Date(date);
+    nextDate.setDate(selectedDate.getDate() + 1);
+
+    searchQuery.createdAt = {
+      $gte: selectedDate,
+      $lt: nextDate
+    };
+  }
+
    try {
-     const user = await User.find({active: false})
+     const skip = (pageNumber - 1) * limitNumber;
+
+     const user = await User.find(searchQuery)
+     .skip(skip)
+     .limit(limitNumber)
+
+     const totalRecords = await User.countDocuments(searchQuery);
 
      if (!user || user.length === 0) {
         return res.status(404).json({
@@ -102,7 +187,13 @@ const getInActiveEmp = async (req: Request, res: Response): Promise<Response> =>
 
     return res.status(200).json({
         success: true,
-        data: user
+        data: user,
+        pagination: {
+          totalRecords,
+          currentPage: pageNumber,
+          totalPages: Math.ceil(totalRecords / limitNumber),
+          limit: limitNumber
+        }
     })    
    } catch (error) {
      return res.status(500).json({
@@ -275,7 +366,7 @@ const updateUser = async (req: Request, res: Response) => {
 }
 
 const employeeAllCount = async (req: Request, res: Response): Promise<Response>  => {
-   
+
     const empAllcount = await User.countDocuments()
 
     return res.status(200).json({
@@ -284,9 +375,37 @@ const employeeAllCount = async (req: Request, res: Response): Promise<Response> 
     })
 }
 
-const employeeActiveCount = async (req: Request, res: Response): Promise<Response>  => {
+const employeeActiveCount = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response>  => {
+
+   const { search = "", active, date } = req.query;
+
+  const searchQuery: FilterQuery<typeof User> = {active: true};
+
+  if (search) {
+    searchQuery.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { phone: { $regex: search, $options: "i" } },
+      { address: { $regex: search, $options: "i" } }
+    ];
+  }
+
+  if (active) {
+    searchQuery.active = active === 'true';
+  }
+
+  if (date) {
+    const selectedDate = new Date(date);
+    const nextDate = new Date(date);
+    nextDate.setDate(selectedDate.getDate() + 1);
+
+    searchQuery.createdAt = {
+      $gte: selectedDate,
+      $lt: nextDate
+    };
+  }
    
-    const empActiveCount = await User.countDocuments({active: true})
+    const empActiveCount = await User.countDocuments(searchQuery)
 
     return res.status(200).json({
         success: true,
@@ -294,9 +413,37 @@ const employeeActiveCount = async (req: Request, res: Response): Promise<Respons
     })
 }
 
-const employeeInActiveCount = async (req: Request, res: Response): Promise<Response>  => {
+const employeeInActiveCount = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response>  => {
+
+  const { search = "", active, date } = req.query;
+
+  const searchQuery: FilterQuery<typeof User> = {active: false};
+
+  if (search) {
+    searchQuery.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { phone: { $regex: search, $options: "i" } },
+      { address: { $regex: search, $options: "i" } }
+    ];
+  }
+
+  if (active) {
+    searchQuery.active = active === 'true';
+  }
+
+  if (date) {
+    const selectedDate = new Date(date);
+    const nextDate = new Date(date);
+    nextDate.setDate(selectedDate.getDate() + 1);
+
+    searchQuery.createdAt = {
+      $gte: selectedDate,
+      $lt: nextDate
+    };
+  }
    
-    const empInActiveCount = await User.countDocuments({active: false})
+    const empInActiveCount = await User.countDocuments(searchQuery)
 
     return res.status(200).json({
         success: true,
