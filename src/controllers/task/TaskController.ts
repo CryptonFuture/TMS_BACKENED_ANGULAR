@@ -202,6 +202,16 @@ const updateTask = async (req: Request, res: Response): Promise<Response> => {
     });
 }
 
+const taskCount = async (req: Request, res: Response): Promise<Response>  => {
+   
+    const taskcount = await Task.countDocuments()
+
+    return res.status(200).json({
+        success: true,
+        count: taskcount
+    })
+}
+
 
 export {
     getTask,
@@ -210,5 +220,6 @@ export {
     viewTaskById,
     deleteTask,
     deleteTasks,
-    updateTask
+    updateTask,
+    taskCount
 }
