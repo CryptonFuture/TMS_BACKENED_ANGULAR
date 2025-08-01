@@ -7,6 +7,7 @@ import employeeRoutes from './routes/employee/employeeRoutes'
 import desDepRoutes from './routes/desDep/desDepRoutes'
 import addAssignEmployeeToClientRoutes from './routes/assign-emp-to-client/assignEmpToClientRoutes'
 import taskRoutes from './routes/task/taskRoutes'
+import projectRoutes from './routes/project/projectRoutes'
 
 const prefix = '/api/v1'
 
@@ -22,6 +23,7 @@ app.use(prefix, employeeRoutes)
 app.use(prefix, desDepRoutes)
 app.use(prefix, addAssignEmployeeToClientRoutes)
 app.use(prefix, taskRoutes)
+app.use(prefix, projectRoutes)
 
 app.get('/', () => {
     console.log('Service is working');
