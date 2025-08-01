@@ -1,6 +1,16 @@
 import Task from '../../models/task/taskModel'
 import { Request, Response } from 'express'
 import { ITask } from '../../types/task.types'
+import { FilterQuery } from 'mongoose';
+
+interface QueryParams {
+  search?: string;
+  status?: string;
+  date?: string;
+  page?: any,
+  limit?: any,
+  sort?: any
+}
 
 const AddTask = async (req: Request, res: Response): Promise<Response> => {
     const { name, client_id, description }: any = req.body
@@ -34,9 +44,52 @@ const AddTask = async (req: Request, res: Response): Promise<Response> => {
     }
 }
 
-const getTask = async (req: Request, res: Response): Promise<Response> => {
+const getTask = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
+      const {page = 1, limit = 10, search = "", sort = "", status, date } = req.query;
+    
+      const pageNumber = parseInt(page, 10);
+      const limitNumber = parseInt(limit, 10);
+    
+      const searchQuery: FilterQuery<typeof Task> = {};
+    
+      if (search) {
+        searchQuery.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } }
+        ];
+      }
+    
+      if (status) {
+        searchQuery.status = status === 'true';
+      }
+    
+      if (date) {
+        const selectedDate = new Date(date);
+        const nextDate = new Date(date);
+        nextDate.setDate(selectedDate.getDate() + 1);
+    
+        searchQuery.createdAt = {
+          $gte: selectedDate,
+          $lt: nextDate
+        };
+    
+      }
     try {
-        const task = await Task.find()
+        const skip = (pageNumber - 1) * limitNumber;
+
+        let sortOptions: any = {};
+        if (sort) {
+            const [field, order] = sort.split(":");
+            sortOptions[field] = order === "desc" ? -1 : 1;
+        }
+
+        const task = await Task.find(searchQuery)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limitNumber)
+
+        const totalRecords = await Task.countDocuments(searchQuery);
+        
 
         if (!task || task.length === 0) {
             return res.status(404).json({
@@ -47,7 +100,13 @@ const getTask = async (req: Request, res: Response): Promise<Response> => {
 
         return res.status(200).json({
             success: true,
-            data: task
+            data: task,
+            pagination: {
+                totalRecords,
+                currentPage: pageNumber,
+                totalPages: Math.ceil(totalRecords / limitNumber),
+                limit: limitNumber
+            }
         })
     } catch (error) {
         return res.status(500).json({
@@ -202,9 +261,35 @@ const updateTask = async (req: Request, res: Response): Promise<Response> => {
     });
 }
 
-const taskCount = async (req: Request, res: Response): Promise<Response>  => {
-   
-    const taskcount = await Task.countDocuments()
+const taskCount = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response>  => {
+    
+      const { search = "", status, date } = req.query;
+    
+      const searchQuery: FilterQuery<typeof Task> = {};
+    
+      if (search) {
+        searchQuery.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } }
+        ];
+      }
+    
+      if (status) {
+        searchQuery.status = status === 'true';
+      }
+    
+      if (date) {
+        const selectedDate = new Date(date);
+        const nextDate = new Date(date);
+        nextDate.setDate(selectedDate.getDate() + 1);
+    
+        searchQuery.createdAt = {
+          $gte: selectedDate,
+          $lt: nextDate
+        };
+      }
+
+    const taskcount = await Task.countDocuments(searchQuery)
 
     return res.status(200).json({
         success: true,
