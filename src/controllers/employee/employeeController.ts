@@ -327,9 +327,9 @@ const deleteUsers = async (req: Request, res: Response): Promise<Response> => {
 const updateUser = async (req: Request, res: Response) => {
     const { id } = req.params
 
-    const { phone, address, designation, department, description, active, is_admin } = req.body;
+    const { phone, address, designName, department, description, active, is_admin } = req.body;
 
-    if (!phone || !address || !designation || !department) {
+    if (!phone || !address || !designName || !department) {
         return res.status(400).json({
             success: false,
             error: 'Please fill out all fields',
@@ -341,7 +341,7 @@ const updateUser = async (req: Request, res: Response) => {
         {
             phone,
             address,
-            designation,
+            designName,
             department,
             description,
             active,

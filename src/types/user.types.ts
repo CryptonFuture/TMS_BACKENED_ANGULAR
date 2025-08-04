@@ -6,7 +6,7 @@ export interface IUser {
   confirmPass: string;
   phone: string;
   address: string;
-  designation: string;
+  designName: string;
   department: string;
   joiningDate: Date;
   description: string;

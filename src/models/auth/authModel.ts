@@ -34,7 +34,7 @@ const authSchema: Schema = new Schema({
         required: true 
     },
 
-    designation: {
+    designName: {
         type: String,
         required: true 
     },
