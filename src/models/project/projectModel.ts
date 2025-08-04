@@ -30,7 +30,8 @@ const projectSchema: Schema = new Schema({
     },
 
     project_manager_id: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User',
         default: null
     },
 
@@ -40,8 +41,9 @@ const projectSchema: Schema = new Schema({
     },
 
     manager_id: {
-        type: String,
-         default: null
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User',
+        default: null
     },
 
     start_date: {

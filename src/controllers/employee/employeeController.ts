@@ -301,8 +301,6 @@ const deleteEmp = async (req: Request, res: Response): Promise<Response> => {
       message: 'Deleted user successfully',
     });
 
-  
-
 };
 
 // soft deleted
