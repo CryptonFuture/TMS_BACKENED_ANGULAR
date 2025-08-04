@@ -3,7 +3,7 @@ export interface IProject {
   project_name: string,
   working_hours: number,
   joc: number,
-  designation: string,
+  designName: string,
   project_manager_id: string,
   client_id: string,
   manager_id: string,

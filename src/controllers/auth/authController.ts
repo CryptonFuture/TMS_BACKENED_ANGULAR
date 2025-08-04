@@ -14,7 +14,7 @@ const register = async (req: Request, res: Response): Promise<Response> => {
         confirmPass, 
         phone, 
         address, 
-        designation, 
+        designName, 
         department, 
         joiningDate, 
         description }: IUser = req.body
@@ -25,7 +25,7 @@ const register = async (req: Request, res: Response): Promise<Response> => {
         !confirmPass || 
         !phone || 
         !address || 
-        !designation || 
+        !designName || 
         !department || 
         !joiningDate) {
         return res.status(400).json({
@@ -72,7 +72,7 @@ const register = async (req: Request, res: Response): Promise<Response> => {
         confirmPass: hashConfirmPass,
         phone,
         address,
-        designation,
+        designName,
         department,
         joiningDate,
         description

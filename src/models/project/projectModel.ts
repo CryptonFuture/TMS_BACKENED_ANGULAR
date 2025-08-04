@@ -24,7 +24,7 @@ const projectSchema: Schema = new Schema({
         required: true
     },
 
-    designation: {
+    designName: {
         type: String,
         required: true
     },
@@ -58,6 +58,11 @@ const projectSchema: Schema = new Schema({
     },
 
     description: {
+        type: String,
+        default: null
+    },
+
+    remarks: {
         type: String,
         default: null
     },

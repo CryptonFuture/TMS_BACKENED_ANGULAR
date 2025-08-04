@@ -1,13 +1,13 @@
-import mongoose from "mongoose";
+import mongoose, {Document, Schema} from "mongoose";
 
-const desSchema = new mongoose.Schema({
-    designName: {
+const projectStatusSchema: Schema = new Schema({
+    projectStatus: {
         type: String,
         required: true
     },
 
     description: {
-        type: String,
+        type: String
     },
 
     status: {
@@ -34,5 +34,5 @@ const desSchema = new mongoose.Schema({
     timestamps: true
 })
 
-export default mongoose.model('Designation', desSchema)
+export default mongoose.model('ProjectStatus', projectStatusSchema)
 

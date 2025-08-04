@@ -9,7 +9,7 @@ const AddProject = async (req: Request, res: Response): Promise<Response> => {
         project_name,
         working_hours,
         joc,
-        designation,
+        designName,
         project_manager_id,
         client_id,
         manager_id,
@@ -19,7 +19,7 @@ const AddProject = async (req: Request, res: Response): Promise<Response> => {
         description
     }: IProject = req.body
 
-    if (!project_code || !project_name || !working_hours || !joc || !designation) {
+    if (!project_code || !project_name || !working_hours || !joc || !designName) {
         return res.status(400).json({
             success: false,
             error: 'Please fill out all fields'
@@ -47,13 +47,15 @@ const AddProject = async (req: Request, res: Response): Promise<Response> => {
         project_name,
         working_hours,
         joc,
-        designation,
+        designName,
         project_manager_id,
         client_id,
         manager_id,
         start_date,
         end_date,
         allow_for_off_time,
+        projectStatus: 'pending',
+        status: null,
         description
     })
 
@@ -95,6 +97,198 @@ const getProject = async (req: Request, res: Response): Promise<Response> => {
             error: 'internal server error',
         });
     }
+}
+
+const getActiveProject = async (req: Request, res: Response): Promise<Response> => {
+    try {
+
+        const projectActive = await Project.find({status: true})
+
+        if (!projectActive || projectActive.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "No record found"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: projectActive,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: 'internal server error',
+        });
+    }
+}
+
+const getInActiveProject = async (req: Request, res: Response): Promise<Response> => {
+    try {
+
+        const projectInActive = await Project.find({status: false})
+
+        if (!projectInActive || projectInActive.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "No record found"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: projectInActive,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: 'internal server error',
+        });
+    }
+}
+
+const getPendingProject = async (req: Request, res: Response): Promise<Response> => {
+    try {
+
+        const projectPending = await Project.find({projectStatus: 'pending'})
+
+        if (!projectPending || projectPending.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "No record found"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: projectPending,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: 'internal server error',
+        });
+    }
+}
+
+const getCompletedProject = async (req: Request, res: Response): Promise<Response> => {
+    try {
+
+        const projectCompleted = await Project.find({projectStatus: 'completed'})
+
+        if (!projectCompleted || projectCompleted.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "No record found"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: projectCompleted,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: 'internal server error',
+        });
+    }
+}
+
+const getRejectProject = async (req: Request, res: Response): Promise<Response> => {
+    try {
+
+        const projectReject = await Project.find({projectStatus: 'reject'})
+
+        if (!projectReject || projectReject.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "No record found"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: projectReject,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: 'internal server error',
+        });
+    }
+}
+
+const approvalCompletedRemarks = async (req: Request, res: Response): Promise<Response>  => {
+    const { id } = req.params
+    const { remarks } = req.body
+
+    if (!remarks) {
+        return res.status(400).json({
+            success: false,
+            error: 'remarks is required'
+        })
+    }
+
+    const project = await Project.findByIdAndUpdate(
+        { _id: id },
+        {
+            remarks,
+            projectStatus: "completed"
+        },
+        { new: true }
+    )
+       
+
+     if (project) {
+        return res.status(200).json({
+            success: true,
+            message: "project completed successfully",
+            data: project
+        })
+    } else {
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error",
+        })
+    }
+
+}
+
+const approvalRejectedRemarks = async (req: Request, res: Response): Promise<Response>  => {
+    const { id } = req.params
+    const { remarks } = req.body
+
+    if (!remarks) {
+        return res.status(400).json({
+            success: false,
+            error: 'remarks is required'
+        })
+    }
+
+    const project = await Project.findByIdAndUpdate(
+        { _id: id },
+        {
+            remarks,
+            projectStatus: "reject"
+        },
+        { new: true }
+    )
+       
+
+     if (project) {
+        return res.status(200).json({
+            success: true,
+            message: "project rejected successfully",
+            data: project
+        })
+    } else {
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error",
+        })
+    }
+
 }
 
 const editProjectById = async (req: Request, res: Response): Promise<Response> => {
@@ -212,7 +406,7 @@ const updateProject = async (req: Request, res: Response): Promise<Response> => 
         project_name,
         working_hours,
         joc,
-        designation,
+        designName,
         project_manager_id,
         client_id,
         manager_id,
@@ -224,7 +418,7 @@ const updateProject = async (req: Request, res: Response): Promise<Response> => 
         status
     }: IProject = req.body;
 
-    if (!project_code || !project_name || !working_hours || !joc || !designation) {
+    if (!project_code || !project_name || !working_hours || !joc || !designName) {
         return res.status(400).json({
             success: false,
             error: 'Please fill out all fields'
@@ -238,7 +432,7 @@ const updateProject = async (req: Request, res: Response): Promise<Response> => 
             project_name,
             working_hours,
             joc,
-            designation,
+            designName,
             project_manager_id,
             client_id,
             manager_id,
@@ -269,13 +463,65 @@ const updateProject = async (req: Request, res: Response): Promise<Response> => 
 
 const projectCount = async (req: Request, res: Response): Promise<Response> => {
 
-    const taskcount = await Project.countDocuments()
+    const projcount = await Project.countDocuments()
 
     return res.status(200).json({
         success: true,
-        count: taskcount
+        count: projcount
     })
 }
+
+const projectActiveCount = async (req: Request, res: Response): Promise<Response> => {
+
+    const projActivecount = await Project.countDocuments({status: true})
+
+    return res.status(200).json({
+        success: true,
+        count: projActivecount
+    })
+}
+
+const projectInActiveCount = async (req: Request, res: Response): Promise<Response> => {
+
+    const projInActivecount = await Project.countDocuments({status: false})
+
+    return res.status(200).json({
+        success: true,
+        count: projInActivecount
+    })
+}
+
+const projectCompletedCount = async (req: Request, res: Response): Promise<Response> => {
+
+    const projCompletedCount = await Project.countDocuments({projectStatus: 'completed'})
+
+    return res.status(200).json({
+        success: true,
+        count: projCompletedCount
+    })
+}
+
+const projectPendingCount = async (req: Request, res: Response): Promise<Response> => {
+
+    const projPendingCount = await Project.countDocuments({projectStatus: 'pending'})
+
+    return res.status(200).json({
+        success: true,
+        count: projPendingCount
+    })
+}
+
+const projectRejectCount = async (req: Request, res: Response): Promise<Response> => {
+
+    const projRejectCount = await Project.countDocuments({projectStatus: 'reject'})
+
+    return res.status(200).json({
+        success: true,
+        count: projRejectCount
+    })
+}
+
+
 
 const toggleIsAllow = async (req: Request, res: Response) => {
     const { id, allow_for_off_time } = req.body
@@ -308,15 +554,64 @@ const toggleIsAllow = async (req: Request, res: Response) => {
    
 }
 
+const activeProject = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params
+
+    const user = await Project.findByIdAndUpdate({ _id: id }, { status: true })
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            error: "No project Id found"
+        })
+    } else {
+        return res.status(200).json({
+            success: true,
+            message: 'Project Active Successfully'
+        })
+    }
+}
+
+const InactiveProject = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params
+
+    const user = await Project.findByIdAndUpdate({ _id: id }, { status: false })
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            error: "No project Id found"
+        })
+    } else {
+        return res.status(200).json({
+            success: true,
+            message: 'Project InActive Successfully'
+        })
+    }
+}
 
 export {
     AddProject,
     getProject,
+    getActiveProject,
+    getInActiveProject,
+    getCompletedProject,
+    getPendingProject,
+    getRejectProject,
     editProjectById,
     viewProjectById,
     updateProject,
     deleteProject,
     deleteProjects,
     projectCount,
-    toggleIsAllow
+    projectActiveCount,
+    projectInActiveCount,
+    projectCompletedCount,
+    projectPendingCount,
+    projectRejectCount,
+    toggleIsAllow,
+    approvalCompletedRemarks,
+    approvalRejectedRemarks,
+    activeProject,
+    InactiveProject
 }
