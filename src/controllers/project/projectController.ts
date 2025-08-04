@@ -1,6 +1,7 @@
 import Project from '../../models/project/projectModel'
 import { Request, Response } from 'express'
 import { IProject } from '../../types/project.types'
+import User from '../../models/auth/authModel'
 
 
 const AddProject = async (req: Request, res: Response): Promise<Response> => {
@@ -79,6 +80,8 @@ const getProject = async (req: Request, res: Response): Promise<Response> => {
     try {
 
         const project = await Project.find()
+        .populate('project_manager_id')
+        .populate('manager_id')
 
         if (!project || project.length === 0) {
             return res.status(404).json({
@@ -302,6 +305,8 @@ const editProjectById = async (req: Request, res: Response): Promise<Response> =
     }
 
     const project = await Project.findById(id)
+    .populate('project_manager_id')
+    .populate('manager_id')
 
     if (!project) {
         return res.status(404).json({
