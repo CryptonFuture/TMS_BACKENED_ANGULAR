@@ -14,6 +14,16 @@ const authSchema: Schema = new Schema({
         required: true
     },
 
+    phone: {
+        type: String,
+         required: true
+    },
+
+    address: {
+        type: String,
+        required: true
+    },
+
     password: {
         type: String,
         required: true
@@ -24,14 +34,12 @@ const authSchema: Schema = new Schema({
         required: true
     },
 
-    phone: {
+    startTime: {
         type: String,
-        required: true
     },
 
-    address: {
+    endTime: {
         type: String,
-        required: true 
     },
 
     description: {
