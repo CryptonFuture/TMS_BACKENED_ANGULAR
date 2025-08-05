@@ -6,8 +6,8 @@ export interface IClient {
   phone: string,
   address: string,
   description: string,
-  start_time: any,
-  end_time: any,
+  startTime: any,
+  endTime: any,
   status: boolean
   is_deleted?: boolean;
   created_by?: string | null;
