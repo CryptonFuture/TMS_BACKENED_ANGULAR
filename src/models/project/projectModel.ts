@@ -36,8 +36,9 @@ const projectSchema: Schema = new Schema({
     },
 
     client_id: {
-        type: String,
-         default: null
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Client',
+        default: null
     },
 
     manager_id: {

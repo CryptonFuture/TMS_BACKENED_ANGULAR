@@ -82,6 +82,7 @@ const getProject = async (req: Request, res: Response): Promise<Response> => {
         const project = await Project.find()
         .populate('project_manager_id')
         .populate('manager_id')
+        .populate('client_id')
 
         if (!project || project.length === 0) {
             return res.status(404).json({
@@ -106,6 +107,9 @@ const getActiveProject = async (req: Request, res: Response): Promise<Response> 
     try {
 
         const projectActive = await Project.find({status: true})
+        .populate('project_manager_id')
+        .populate('manager_id')
+        .populate('client_id')
 
         if (!projectActive || projectActive.length === 0) {
             return res.status(404).json({
@@ -130,6 +134,9 @@ const getInActiveProject = async (req: Request, res: Response): Promise<Response
     try {
 
         const projectInActive = await Project.find({status: false})
+        .populate('project_manager_id')
+        .populate('manager_id')
+        .populate('client_id')
 
         if (!projectInActive || projectInActive.length === 0) {
             return res.status(404).json({
@@ -154,6 +161,9 @@ const getPendingProject = async (req: Request, res: Response): Promise<Response>
     try {
 
         const projectPending = await Project.find({projectStatus: 'pending'})
+        .populate('project_manager_id')
+        .populate('manager_id')
+        .populate('client_id')
 
         if (!projectPending || projectPending.length === 0) {
             return res.status(404).json({
@@ -178,6 +188,9 @@ const getCompletedProject = async (req: Request, res: Response): Promise<Respons
     try {
 
         const projectCompleted = await Project.find({projectStatus: 'completed'})
+        .populate('project_manager_id')
+        .populate('manager_id')
+        .populate('client_id')
 
         if (!projectCompleted || projectCompleted.length === 0) {
             return res.status(404).json({
@@ -202,6 +215,9 @@ const getRejectProject = async (req: Request, res: Response): Promise<Response> 
     try {
 
         const projectReject = await Project.find({projectStatus: 'reject'})
+        .populate('project_manager_id')
+        .populate('manager_id')
+        .populate('client_id')
 
         if (!projectReject || projectReject.length === 0) {
             return res.status(404).json({
@@ -307,6 +323,7 @@ const editProjectById = async (req: Request, res: Response): Promise<Response> =
     const project = await Project.findById(id)
     .populate('project_manager_id')
     .populate('manager_id')
+    .populate('client_id')
 
     if (!project) {
         return res.status(404).json({

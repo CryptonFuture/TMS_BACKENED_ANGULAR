@@ -3,6 +3,17 @@ import { Request, Response } from 'express'
 import { IClient } from '../../types/client.types'
 import validator from 'validator'
 import bcrypt from 'bcryptjs'
+import { FilterQuery } from 'mongoose'
+
+interface QueryParams {
+    search?: string;
+    status?: string;
+    description?: string;
+    date?: string;
+    page?: any,
+    limit?: any,
+    sort?: any
+}
 
 
 const AddClient = async (req: Request, res: Response): Promise<Response> => {
@@ -16,7 +27,7 @@ const AddClient = async (req: Request, res: Response): Promise<Response> => {
         description,
         startTime,
         endTime
-        
+
     }: IClient = req.body
 
     if (!name || !email || !password || !confirmPass || !phone || !address) {
@@ -26,47 +37,47 @@ const AddClient = async (req: Request, res: Response): Promise<Response> => {
         })
     }
 
-     if (!validator.isEmail(email)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid Email'
-            })
-        }
+    if (!validator.isEmail(email)) {
+        return res.status(400).json({
+            success: false,
+            error: 'Invalid Email'
+        })
+    }
 
-     const isExistEmail = await Client.findOne({ email })
-    
-        if (isExistEmail) {
-            return res.status(400).json({
-                success: false,
-                error: 'email address already exists has been taken'
-            })
-        } else if (password !== confirmPass) {
-            return res.status(400).json({
-                success: false,
-                error: "Password does'nt match"
-            })
-        }
+    const isExistEmail = await Client.findOne({ email })
 
-         if (password.length < 10 || confirmPass.length < 10) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Password must be at least 10 characters long'
-                })
-            }
-        
-            const hashPassword = await bcrypt.hash(password, 10)
-            const hashConfirmPass = await bcrypt.hash(confirmPass, 10)
+    if (isExistEmail) {
+        return res.status(400).json({
+            success: false,
+            error: 'email address already exists has been taken'
+        })
+    } else if (password !== confirmPass) {
+        return res.status(400).json({
+            success: false,
+            error: "Password does'nt match"
+        })
+    }
+
+    if (password.length < 10 || confirmPass.length < 10) {
+        return res.status(400).json({
+            success: false,
+            error: 'Password must be at least 10 characters long'
+        })
+    }
+
+    const hashPassword = await bcrypt.hash(password, 10)
+    const hashConfirmPass = await bcrypt.hash(confirmPass, 10)
 
     const client = new Client({
-      name,
-      email,
-      password: hashPassword,
-      confirmPass: hashConfirmPass,
-      phone,
-      address,
-      description,
-      startTime,
-      endTime
+        name,
+        email,
+        password: hashPassword,
+        confirmPass: hashConfirmPass,
+        phone,
+        address,
+        description,
+        startTime,
+        endTime
     })
 
     const clientData = await client.save()
@@ -85,10 +96,49 @@ const AddClient = async (req: Request, res: Response): Promise<Response> => {
     }
 }
 
-const getClient = async (req: Request, res: Response): Promise<Response> => {
+const getClient = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
+    const { page = 1, limit = 10, search = "", sort = "", description = "" } = req.query;
+
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    const searchQuery: FilterQuery<typeof Client> = {};
+
+    if (search) {
+        searchQuery.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } }
+        ];
+    }
+
+     if (description) {
+        if (searchQuery.$or) {
+            searchQuery.$and = [
+                { $or: searchQuery.$or },
+                { description: { $regex: description, $options: "i" } }
+            ];
+            delete searchQuery.$or; 
+        } else {
+            searchQuery.description = { $regex: description, $options: "i" };
+        }
+    }
+
     try {
 
-        const client = await Client.find()
+        const skip = (pageNumber - 1) * limitNumber;
+
+        let sortOptions: any = {};
+        if (sort) {
+            const [field, order] = sort.split(":");
+            sortOptions[field] = order === "desc" ? -1 : 1;
+        }
+
+        const client = await Client.find(searchQuery)
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(limitNumber)
+
+        const totalRecords = await Client.countDocuments(searchQuery);
 
         if (!client || client.length === 0) {
             return res.status(404).json({
@@ -100,6 +150,12 @@ const getClient = async (req: Request, res: Response): Promise<Response> => {
         return res.status(200).json({
             success: true,
             data: client,
+            pagination: {
+                totalRecords,
+                currentPage: pageNumber,
+                totalPages: Math.ceil(totalRecords / limitNumber),
+                limit: limitNumber
+            }
         })
     } catch (error) {
         return res.status(500).json({
@@ -109,10 +165,50 @@ const getClient = async (req: Request, res: Response): Promise<Response> => {
     }
 }
 
-const getExistingClient = async (req: Request, res: Response): Promise<Response> => {
+const getExistingClient = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
+    const { page = 1, limit = 10, search = "", sort = "", description = "" } = req.query;
+
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    const searchQuery: FilterQuery<typeof Client> = { status: true };
+
+    if (search) {
+        searchQuery.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+        ];
+    }
+
+    if (description) {
+        if (searchQuery.$or) {
+            searchQuery.$and = [
+                { $or: searchQuery.$or },
+                { description: { $regex: description, $options: "i" } }
+            ];
+            delete searchQuery.$or; 
+        } else {
+            searchQuery.description = { $regex: description, $options: "i" };
+        }
+    }
+
     try {
 
-        const existingClient = await Client.find({status: true})
+        const skip = (pageNumber - 1) * limitNumber;
+
+        let sortOptions: any = {};
+        if (sort) {
+            const [field, order] = sort.split(":");
+            sortOptions[field] = order === "desc" ? -1 : 1;
+        }
+
+        const existingClient = await Client.find(searchQuery)
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(limitNumber)
+
+        const totalRecords = await Client.countDocuments(searchQuery);
+
 
         if (!existingClient || existingClient.length === 0) {
             return res.status(404).json({
@@ -124,6 +220,12 @@ const getExistingClient = async (req: Request, res: Response): Promise<Response>
         return res.status(200).json({
             success: true,
             data: existingClient,
+            pagination: {
+                totalRecords,
+                currentPage: pageNumber,
+                totalPages: Math.ceil(totalRecords / limitNumber),
+                limit: limitNumber
+            }
         })
     } catch (error) {
         return res.status(500).json({
@@ -133,10 +235,50 @@ const getExistingClient = async (req: Request, res: Response): Promise<Response>
     }
 }
 
-const getNonExistingClient = async (req: Request, res: Response): Promise<Response> => {
+const getNonExistingClient = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
+    const { page = 1, limit = 10, search = "", sort = "", description = "" } = req.query;
+
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    const searchQuery: FilterQuery<typeof Client> = { status: false };
+
+    if (search) {
+        searchQuery.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } }
+        ];
+    }
+
+     if (description) {
+        if (searchQuery.$or) {
+            searchQuery.$and = [
+                { $or: searchQuery.$or },
+                { description: { $regex: description, $options: "i" } }
+            ];
+            delete searchQuery.$or; 
+        } else {
+            searchQuery.description = { $regex: description, $options: "i" };
+        }
+    }
+
+
     try {
 
-        const NonExistingClient = await Client.find({status: false})
+        const skip = (pageNumber - 1) * limitNumber;
+
+        let sortOptions: any = {};
+        if (sort) {
+            const [field, order] = sort.split(":");
+            sortOptions[field] = order === "desc" ? -1 : 1;
+        }
+
+        const NonExistingClient = await Client.find(searchQuery)
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(limitNumber)
+
+        const totalRecords = await Client.countDocuments(searchQuery);
 
         if (!NonExistingClient || NonExistingClient.length === 0) {
             return res.status(404).json({
@@ -148,6 +290,12 @@ const getNonExistingClient = async (req: Request, res: Response): Promise<Respon
         return res.status(200).json({
             success: true,
             data: NonExistingClient,
+            pagination: {
+                totalRecords,
+                currentPage: pageNumber,
+                totalPages: Math.ceil(totalRecords / limitNumber),
+                limit: limitNumber
+            }
         })
     } catch (error) {
         return res.status(500).json({
@@ -312,9 +460,32 @@ const updateClient = async (req: Request, res: Response): Promise<Response> => {
     });
 }
 
-const clientCount = async (req: Request, res: Response): Promise<Response> => {
+const clientCount = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
 
-    const cliecount = await Client.countDocuments()
+    const { search = "", description = "" } = req.query;
+
+    const searchQuery: FilterQuery<typeof Client> = {};
+
+    if (search) {
+        searchQuery.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } }
+        ];
+    }
+
+     if (description) {
+        if (searchQuery.$or) {
+            searchQuery.$and = [
+                { $or: searchQuery.$or },
+                { description: { $regex: description, $options: "i" } }
+            ];
+            delete searchQuery.$or; 
+        } else {
+            searchQuery.description = { $regex: description, $options: "i" };
+        }
+    }
+
+    const cliecount = await Client.countDocuments(searchQuery)
 
     return res.status(200).json({
         success: true,
@@ -322,9 +493,32 @@ const clientCount = async (req: Request, res: Response): Promise<Response> => {
     })
 }
 
-const existingClientCount = async (req: Request, res: Response): Promise<Response> => {
+const existingClientCount = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
 
-    const existingClieCount = await Client.countDocuments({status: true})
+    const { search = "", description = "" } = req.query;
+
+    const searchQuery: FilterQuery<typeof Client> = { status: true };
+
+    if (search) {
+        searchQuery.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } }
+        ];
+    }
+
+    if (description) {
+        if (searchQuery.$or) {
+            searchQuery.$and = [
+                { $or: searchQuery.$or },
+                { description: { $regex: description, $options: "i" } }
+            ];
+            delete searchQuery.$or; 
+        } else {
+            searchQuery.description = { $regex: description, $options: "i" };
+        }
+    }
+
+    const existingClieCount = await Client.countDocuments(searchQuery)
 
     return res.status(200).json({
         success: true,
@@ -332,9 +526,32 @@ const existingClientCount = async (req: Request, res: Response): Promise<Respons
     })
 }
 
-const NonExistingClientCount = async (req: Request, res: Response): Promise<Response> => {
+const NonExistingClientCount = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
 
-    const NonExistingClieCount = await Client.countDocuments({status: false})
+    const { search = "", description = "" } = req.query;
+
+    const searchQuery: FilterQuery<typeof Client> = { status: false };
+
+    if (search) {
+        searchQuery.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } }
+        ];
+    }
+
+    if (description) {
+        if (searchQuery.$or) {
+            searchQuery.$and = [
+                { $or: searchQuery.$or },
+                { description: { $regex: description, $options: "i" } }
+            ];
+            delete searchQuery.$or; 
+        } else {
+            searchQuery.description = { $regex: description, $options: "i" };
+        }
+    }
+
+    const NonExistingClieCount = await Client.countDocuments(searchQuery)
 
     return res.status(200).json({
         success: true,

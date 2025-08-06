@@ -87,6 +87,7 @@ const getTask = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Pr
         .sort(sortOptions)
         .skip(skip)
         .limit(limitNumber)
+        .populate('client_id')
 
         const totalRecords = await Task.countDocuments(searchQuery);
         

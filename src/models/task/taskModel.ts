@@ -14,7 +14,8 @@ const taskSchema: Schema = new Schema({
     },
 
     client_id: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Client',
         default: null
     },
 
