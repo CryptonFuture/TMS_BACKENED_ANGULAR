@@ -2,11 +2,25 @@ import mongoose from "mongoose";
 
 const assignEmpToClientSchema = new mongoose.Schema({
     emp_id: {
-        type: String,
-        default: null
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User',
+        default: null,
+        required: true
     },
 
     client_id: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Client',
+        default: null
+    },
+
+    proj_id: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Project',
+        default: null
+    }, 
+    
+    description: {
         type: String,
         default: null
     },
