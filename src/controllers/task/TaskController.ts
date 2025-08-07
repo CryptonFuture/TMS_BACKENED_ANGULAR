@@ -128,6 +128,7 @@ const editTaskById = async (req: Request, res: Response): Promise<Response> => {
     }
 
     const task = await Task.findById(id)
+     .populate('client_id')
 
     if (!task) {
         return res.status(404).json({
