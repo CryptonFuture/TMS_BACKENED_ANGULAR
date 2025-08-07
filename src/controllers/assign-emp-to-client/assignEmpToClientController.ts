@@ -1,4 +1,5 @@
 import AssignEmpToClient from '../../models/assign-emp-to-client/assignEmpToClientModel'
+import Client from '../../models/client/clientModel'
 import { Request, Response } from 'express'
 
 const addAssignEmployeeToClient = async (req: Request, res: Response): Promise<Response> => {
@@ -11,12 +12,33 @@ const addAssignEmployeeToClient = async (req: Request, res: Response): Promise<R
         })
     }
 
+    const alreadyAssigned = await AssignEmpToClient.findOne({
+        emp_id,
+        client_id,
+        assignStatus: 1 
+    });
+
+    if (alreadyAssigned) {
+        return res.status(400).json({
+        success: false,
+        error: 'This employee is already assigned to the selected client',
+        });
+    }
+
     const assignEmp = new AssignEmpToClient({
         emp_id,
         client_id,
         proj_id,
-        description
+        description,
+        assignStatus: 1,
+        clientStatus: 1
     })
+
+
+     await Client.updateOne(
+            { _id: client_id },
+            { $set: { clientStatus: true, assignStatus: true } }
+        );
 
     const assignEmpToClient = await assignEmp.save()
 
@@ -32,6 +54,60 @@ const addAssignEmployeeToClient = async (req: Request, res: Response): Promise<R
             message: "Internal server error",
         })
     }
+}
+
+const getUnAssignToClientEmp = async (req: Request, res: Response): Promise<Response> => {
+   try {
+     const unAssignEmpToClient = await Client.find({assignStatus: false, clientStatus: false})
+     .populate('proj_id')
+     .populate('client_id')
+    
+     if (!unAssignEmpToClient || unAssignEmpToClient.length === 0) {
+        return res.status(404).json({
+            success: false,
+            error: "No record found"
+        })
+    }
+
+    return res.status(200).json({
+        success: true,
+        data: unAssignEmpToClient,
+        
+      
+    })    
+   } catch (error) {
+     return res.status(500).json({
+      success: false,
+      error: 'internal server error',
+    });
+   }
+}
+
+const getAssignToClientEmp = async (req: Request, res: Response): Promise<Response> => {
+   try {
+     const user = await AssignEmpToClient.find({assignStatus: true})
+     .populate('emp_id')
+     .populate('proj_id')
+     .populate('client_id')
+
+     if (!user || user.length === 0) {
+        return res.status(404).json({
+            success: false,
+            error: "No record found"
+        })
+    }
+
+    return res.status(200).json({
+        success: true,
+        data: user,
+      
+    })    
+   } catch (error) {
+     return res.status(500).json({
+      success: false,
+      error: 'internal server error',
+    });
+   }
 }
 
 const getAssignEmp = async (req: Request, res: Response): Promise<Response> => {
@@ -88,6 +164,26 @@ const getUnAssignEmp = async (req: Request, res: Response): Promise<Response> =>
    }
 }
 
+const assignEmpToClientCount = async (req: Request, res: Response): Promise<Response>  => {
+
+    const empAssignToClientCount = await AssignEmpToClient.countDocuments({assignStatus: true})
+
+    return res.status(200).json({
+        success: true,
+        count: empAssignToClientCount
+    })
+}
+
+const unAssignEmpToClientCount = async (req: Request, res: Response): Promise<Response>  => {
+
+    const empUnAssignToClientCount = await Client.countDocuments({assignStatus: false})
+
+    return res.status(200).json({
+        success: true,
+        count: empUnAssignToClientCount
+    })
+}
+
 const assignEmpCount = async (req: Request, res: Response): Promise<Response>  => {
 
     const empAssignCount = await AssignEmpToClient.countDocuments({status: true})
@@ -127,6 +223,13 @@ const deleteAllocationEmp = async (req: Request, res: Response): Promise<Respons
         success: false,
         error: 'No allocEmp found with this ID',
       });
+    }
+
+    if (AllocEmp.is_deleted !== true) {
+        return res.status(400).json({
+        success: false,
+        error: 'Task cannot be deleted until it is marked as deleted=true',
+        });
     }
 
     await AssignEmpToClient.findByIdAndDelete(id);
@@ -207,6 +310,9 @@ const editAllocEmpById = async (req: Request, res: Response): Promise<Response> 
     }
 
     const AllocEmp = await AssignEmpToClient.findById(id)
+    .populate('emp_id')
+    .populate('proj_id')
+    .populate('client_id')
 
     if (!AllocEmp) {
         return res.status(404).json({
@@ -232,6 +338,9 @@ const viewAllocEmpById = async (req: Request, res: Response): Promise<Response> 
     }
 
     const AllocEmp = await AssignEmpToClient.findById(id)
+    .populate('emp_id')
+    .populate('proj_id')
+    .populate('client_id')
 
     if (!AllocEmp) {
         return res.status(404).json({
@@ -256,6 +365,10 @@ export {
     deleteAllocationEmp,
     updateAllocEmp,
     editAllocEmpById,
-    viewAllocEmpById
+    viewAllocEmpById,
+    getAssignToClientEmp,
+    assignEmpToClientCount,
+    getUnAssignToClientEmp,
+    unAssignEmpToClientCount
     
 }

@@ -25,6 +25,16 @@ const assignEmpToClientSchema = new mongoose.Schema({
         default: null
     },
 
+    clientStatus: {
+        type: Boolean,
+        default: 0
+    },
+
+    assignStatus: {
+        type: Boolean,
+        default: 0
+    },
+
     status: {
         type: Boolean,
         default: 0

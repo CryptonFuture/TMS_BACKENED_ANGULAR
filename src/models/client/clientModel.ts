@@ -14,6 +14,18 @@ const authSchema: Schema = new Schema({
         required: true
     },
 
+    client_id: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Client',
+        default: null
+    },
+    
+    proj_id: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Project',
+        default: null
+    }, 
+
     phone: {
         type: String,
          required: true
@@ -54,6 +66,16 @@ const authSchema: Schema = new Schema({
     refreshToken: {
         type: String,
         default: null
+    },
+
+    clientStatus: {
+        type: Boolean,
+        default: 0
+    },
+
+    assignStatus: {
+        type: Boolean,
+        default: 0
     },
 
     status: {
