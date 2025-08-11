@@ -12,6 +12,8 @@ import projectStatusRoutes from './routes/projectStatus/projectStatusRoutes'
 import clientStatusRoutes from './routes/client/clientRoutes'
 import empAssignRoutes from './routes/employee-assignment/employeeAssignmentRoutes'
 import taskAssignRoutes from './routes/task-assignment/taskAssignmentRoutes'
+import logsRoutes from './routes/logs/logsRoutes'
+import ePRoutes from './routes/endpoints/endPointRoutes'
 
 const prefix = '/api/v1'
 
@@ -32,6 +34,8 @@ app.use(prefix, projectStatusRoutes)
 app.use(prefix, clientStatusRoutes)
 app.use(prefix, empAssignRoutes)
 app.use(prefix, taskAssignRoutes)
+app.use(prefix, logsRoutes)
+app.use(prefix, ePRoutes)
 
 app.get('/', () => {
     console.log('Service is working');

@@ -5,6 +5,7 @@ import validator from 'validator'
 import {Request, Response} from 'express'
 import { IUser } from '../../types/user.types'
 import mongoose from 'mongoose'
+import Logs from '../../models/logs/logsModel'
 
 const register = async (req: Request, res: Response): Promise<Response> => {
     const { 
@@ -130,9 +131,24 @@ const login = async (req: Request, res: Response): Promise<Response> => {
 
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString(); 
 
+    const users: any = await User.findByIdAndUpdate(
+        { _id: user._id },
+        { accessToken: accessToken },
+        { new: true }
+    )
+
+    await users.save()
+
+    const logs = new Logs({
+        user_id: user._id,
+        accessToken: accessToken
+    })
+
+    await logs.save()
+
    return res.json({ 
         success: true,
-        accessToken,
+        accessToken: accessToken,
         expiresAt,
         user: { 
             id: user._id, 
@@ -166,6 +182,11 @@ const logout = async (req: Request, res: Response): Promise<Response> => {
             { _id: id },
             { $set: { accessToken: null } },
         )
+
+         await Logs.updateOne(
+            { user_id: id },
+            { $set: { accessToken: null, logout_time: new Date() } }
+        );
 
     if (data.modifiedCount === 0) {
             return res.status(404).json({ success: false, error: "User not found or already logged out." });
