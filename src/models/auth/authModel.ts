@@ -53,6 +53,12 @@ const authSchema: Schema = new Schema({
         type: String,
     },
 
+    role: {
+        type: Number,
+        enum: [0, 1, 2, 3, 4], // admin = 0, emp = 1, client = 2, superAdmin = 3, subAdmin = 4
+        default: 0
+    },
+
     accessToken: {
         type: String,
         default: null
