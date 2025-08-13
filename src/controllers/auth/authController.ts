@@ -18,7 +18,9 @@ const register = async (req: Request, res: Response): Promise<Response> => {
         designName, 
         department, 
         joiningDate, 
-        description }: IUser = req.body
+        description, 
+        role 
+        }: IUser = req.body
 
     if (!name || 
         !email || 
@@ -76,7 +78,8 @@ const register = async (req: Request, res: Response): Promise<Response> => {
         designName,
         department,
         joiningDate,
-        description
+        description,
+        role
     })
 
     const userData = await user.save()
@@ -95,10 +98,10 @@ const register = async (req: Request, res: Response): Promise<Response> => {
     }
 }
 
-const login = async (req: Request, res: Response): Promise<Response> => {
+const login = async (req: Request, res: Response) => {
     try {
 
-    const { email, password }: { email: string; password: string } = req.body;
+    const { email, password, role }: { email: string; password: string, role: number } = req.body;
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -124,20 +127,19 @@ const login = async (req: Request, res: Response): Promise<Response> => {
         });
     }
 
+     if (user.role !== role) {
+      return res.status(403).json({
+        success: false,
+        error: 'Role mismatch. Please select correct role.',
+      });
+    }
+
     const expiresIn = 24 * 60 * 60 * 1000;
     const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET_KEY as string, {
       expiresIn: expiresIn
     });
 
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString(); 
-
-    const users: any = await User.findByIdAndUpdate(
-        { _id: user._id },
-        { accessToken: accessToken },
-        { new: true }
-    )
-
-    await users.save()
 
     const logs = new Logs({
         user_id: user._id,
@@ -146,17 +148,49 @@ const login = async (req: Request, res: Response): Promise<Response> => {
 
     await logs.save()
 
-   return res.json({ 
-        success: true,
-        accessToken: accessToken,
-        expiresAt,
-        user: { 
-            id: user._id, 
-            email: user.email,
-            tokenType: 'Bearer' 
-        } ,
-        message: 'login Successfully'
-    });
+     if (![0, 1, 2, 3, 4].includes(user.role)) {
+        return res.status(403).json({
+            success: false,
+            error: "Unauthorized access: invalid role.",
+        });
+    }
+
+    if (user.role === 0 || user.role === 1 || user.role === 2 || user.role === 3 || user.role === 4) {
+    const users: any = await User.findByIdAndUpdate(
+            { _id: user._id },
+            { accessToken: accessToken },
+            { new: true }
+        )
+
+         let message = "Login successfully";
+            if (user.role === 0) {
+                message = "Admin login successfully";
+            } else if (user.role === 1) {
+                message = "Employee login successfully";
+            } else if (user.role === 2) {
+                message = "Client login successfully";
+            } else if (user.role === 3) {
+                message = "superAdmin login successfully";
+            } else if (user.role === 4) {
+                message = "subAdmin login successfully";
+            }
+    
+        await users.save()
+
+        return res.json({ 
+                success: true,
+                accessToken: accessToken,
+                expiresAt,
+                user: { 
+                    id: user._id, 
+                    email: user.email,
+                    name: user.name,
+                    tokenType: 'Bearer',
+                    role: user.role 
+                } ,
+                message: message
+            });
+    }
   } catch (err) {
    return res.status(500).json({ error: 'Internal server error' });
   }
