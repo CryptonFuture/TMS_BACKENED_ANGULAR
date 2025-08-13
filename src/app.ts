@@ -16,6 +16,7 @@ import logsRoutes from './routes/logs/logsRoutes'
 import ePRoutes from './routes/endpoints/endPointRoutes'
 import rolesRoutes from './routes/roles/rolesRoutes'
 import routesRoutes from './routes/route/routeRoutes'
+import permissionRoutes from './routes/permission/permissionRoute'
 
 const prefix = '/api/v1'
 
@@ -40,6 +41,7 @@ app.use(prefix, logsRoutes)
 app.use(prefix, ePRoutes)
 app.use(prefix, rolesRoutes)
 app.use(prefix, routesRoutes)
+app.use(prefix, permissionRoutes)
 
 app.get('/', () => {
     console.log('Service is working');

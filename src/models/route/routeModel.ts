@@ -9,6 +9,14 @@ const routeSchema: Schema = new Schema({
         required: true
     },
 
+    role: {
+        type: Number,
+    },
+
+    route: {
+        type: String
+    },
+
     description: {
         type: String,
     },

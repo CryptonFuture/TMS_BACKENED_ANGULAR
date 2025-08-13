@@ -18,6 +18,17 @@ const getRoutes = async (req: Request, res: Response): Promise<Response> => {
     });
 };
 
+const routeCount = async (req: Request, res: Response): Promise<Response>  => {
+    
+    const routeCount = await Route.countDocuments()
+
+    return res.status(200).json({
+        success: true,
+        count: routeCount
+    })
+}
+
 export {
     getRoutes,
+    routeCount
 }
