@@ -3,6 +3,15 @@ import { Request, Response } from 'express'
 import { ITaskAssign } from '../../types/taskAssign.types'
 import { FilterQuery } from 'mongoose';
 
+interface QueryParams {
+  search?: string;
+  status?: string;
+  date?: string;
+  page?: any,
+  limit?: any,
+  sort?: any
+}
+
 
 const AddTaskAssign = async (req: Request, res: Response): Promise<Response> => {
     const {
@@ -82,10 +91,49 @@ const AddTaskAssign = async (req: Request, res: Response): Promise<Response> => 
     }
 }
 
-const getTaskAssign = async (req: Request, res: Response): Promise<Response> => {
+const getTaskAssign = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
+     const {page = 1, limit = 10, search = "", sort = "", status, date } = req.query;
+            
+              const pageNumber = parseInt(page, 10);
+              const limitNumber = parseInt(limit, 10);
+            
+              const searchQuery: FilterQuery<typeof TaskAssign> = {};
+            
+              if (search) {
+                searchQuery.$or = [
+                  { description: { $regex: search, $options: "i" } }
+                ];
+              }
+            
+              if (status) {
+                searchQuery.status = status === 'true';
+              }
+            
+              if (date) {
+                const selectedDate = new Date(date);
+                const nextDate = new Date(date);
+                nextDate.setDate(selectedDate.getDate() + 1);
+            
+                searchQuery.createdAt = {
+                  $gte: selectedDate,
+                  $lt: nextDate
+                };
+            
+              }
     try {
        
-        const taskAssign = await TaskAssign.find()
+         const skip = (pageNumber - 1) * limitNumber;
+
+        let sortOptions: any = {};
+        if (sort) {
+            const [field, order] = sort.split(":");
+            sortOptions[field] = order === "desc" ? -1 : 1;
+        }
+
+        const taskAssign = await TaskAssign.find(searchQuery)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limitNumber)
         .populate('user_id')
         .populate('project_id')
         .populate('task_id')
@@ -281,9 +329,34 @@ const updateTaskAssign = async (req: Request, res: Response): Promise<Response> 
     });
 }
 
-const taskAssignCount = async (req: Request, res: Response): Promise<Response>  => {
+const taskAssignCount = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response>  => {
     
-    const TaskAssignCount = await TaskAssign.countDocuments()
+     const { search = "", status, date } = req.query;
+            
+              const searchQuery: FilterQuery<typeof TaskAssign> = {};
+            
+              if (search) {
+                searchQuery.$or = [
+                  { description: { $regex: search, $options: "i" } }
+                ];
+              }
+            
+              if (status) {
+                searchQuery.status = status === 'true';
+              }
+            
+              if (date) {
+                const selectedDate = new Date(date);
+                const nextDate = new Date(date);
+                nextDate.setDate(selectedDate.getDate() + 1);
+            
+                searchQuery.createdAt = {
+                  $gte: selectedDate,
+                  $lt: nextDate
+                };
+              }
+
+    const TaskAssignCount = await TaskAssign.countDocuments(searchQuery)
 
     return res.status(200).json({
         success: true,

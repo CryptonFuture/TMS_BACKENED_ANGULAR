@@ -4,6 +4,16 @@ import { IEmpAssign } from '../../types/empAssign.types'
 import { FilterQuery } from 'mongoose';
 
 
+interface QueryParams {
+  search?: string;
+  status?: string;
+  date?: string;
+  page?: any,
+  limit?: any,
+  sort?: any
+}
+
+
 const AddEmpAssign = async (req: Request, res: Response): Promise<Response> => {
     const {
         user_id, 
@@ -82,10 +92,48 @@ const AddEmpAssign = async (req: Request, res: Response): Promise<Response> => {
     }
 }
 
-const getEmpAssign = async (req: Request, res: Response): Promise<Response> => {
+const getEmpAssign = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response> => {
+     const {page = 1, limit = 10, search = "", sort = "", status, date } = req.query;
+        
+          const pageNumber = parseInt(page, 10);
+          const limitNumber = parseInt(limit, 10);
+        
+          const searchQuery: FilterQuery<typeof EmpAssign> = {};
+        
+          if (search) {
+            searchQuery.$or = [
+              { description: { $regex: search, $options: "i" } }
+            ];
+          }
+        
+          if (status) {
+            searchQuery.status = status === 'true';
+          }
+        
+          if (date) {
+            const selectedDate = new Date(date);
+            const nextDate = new Date(date);
+            nextDate.setDate(selectedDate.getDate() + 1);
+        
+            searchQuery.createdAt = {
+              $gte: selectedDate,
+              $lt: nextDate
+            };
+        
+          }
     try {
+         const skip = (pageNumber - 1) * limitNumber;
+
+        let sortOptions: any = {};
+        if (sort) {
+            const [field, order] = sort.split(":");
+            sortOptions[field] = order === "desc" ? -1 : 1;
+        }
        
-        const empAssign = await EmpAssign.find()
+        const empAssign = await EmpAssign.find(searchQuery)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limitNumber)
         .populate('user_id')
         .populate('project_id')
         .populate('task_id')
@@ -281,9 +329,34 @@ const updateEmpAssign = async (req: Request, res: Response): Promise<Response> =
     });
 }
 
-const empAssignCount = async (req: Request, res: Response): Promise<Response>  => {
+const empAssignCount = async (req: Request<{}, {}, {}, QueryParams>, res: Response): Promise<Response>  => {
     
-    const EmpAssignCount = await EmpAssign.countDocuments()
+      const { search = "", status, date } = req.query;
+        
+          const searchQuery: FilterQuery<typeof EmpAssign> = {};
+        
+          if (search) {
+            searchQuery.$or = [
+              { description: { $regex: search, $options: "i" } }
+            ];
+          }
+        
+          if (status) {
+            searchQuery.status = status === 'true';
+          }
+        
+          if (date) {
+            const selectedDate = new Date(date);
+            const nextDate = new Date(date);
+            nextDate.setDate(selectedDate.getDate() + 1);
+        
+            searchQuery.createdAt = {
+              $gte: selectedDate,
+              $lt: nextDate
+            };
+          }
+
+    const EmpAssignCount = await EmpAssign.countDocuments(searchQuery)
 
     return res.status(200).json({
         success: true,
