@@ -10,7 +10,7 @@ const AddProject = async (req: Request, res: Response): Promise<Response> => {
         project_name,
         working_hours,
         joc,
-        designName,
+        // designName,
         project_manager_id,
         client_id,
         manager_id,
@@ -20,7 +20,7 @@ const AddProject = async (req: Request, res: Response): Promise<Response> => {
         description
     }: IProject = req.body
 
-    if (!project_code || !project_name || !working_hours || !joc || !designName) {
+    if (!project_code || !project_name || !working_hours || !joc) {
         return res.status(400).json({
             success: false,
             error: 'Please fill out all fields'
@@ -48,7 +48,7 @@ const AddProject = async (req: Request, res: Response): Promise<Response> => {
         project_name,
         working_hours,
         joc,
-        designName,
+        // designName,
         project_manager_id,
         client_id,
         manager_id,

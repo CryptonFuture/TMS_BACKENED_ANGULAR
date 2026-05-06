@@ -11,12 +11,19 @@ const taskAssignSchema: Schema = new Schema({
         required: true
     },
 
-    project_id: {
+    client_id: {
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Project',
+        ref: 'Client',
         default: null,
         required: true
     },
+
+    // project_id: {
+    //     type: mongoose.Schema.Types.ObjectId, 
+    //     ref: 'Project',
+    //     default: null,
+    //     required: true
+    // },
 
     plan_start_date: {
         type: String,

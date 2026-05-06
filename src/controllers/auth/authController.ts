@@ -6,6 +6,7 @@ import {Request, Response} from 'express'
 import { IUser } from '../../types/user.types'
 import mongoose from 'mongoose'
 import Logs from '../../models/logs/logsModel'
+// import { redis } from '../../config/redis.config'
 
 const register = async (req: Request, res: Response): Promise<Response> => {
     const { 
@@ -176,6 +177,13 @@ const login = async (req: Request, res: Response) => {
             }
     
         await users.save()
+
+        // await redis.set(
+        //     `token:${user._id}`,
+        //     accessToken,
+        //     'EX',
+        //     60 * 60 * 24
+        // );
 
         return res.json({ 
                 success: true,

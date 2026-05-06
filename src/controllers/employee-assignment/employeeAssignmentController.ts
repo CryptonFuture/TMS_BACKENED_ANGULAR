@@ -1,7 +1,7 @@
 import EmpAssign from '../../models/employee-assignment/employeeAssignmentModel'
 import { Request, Response } from 'express'
 import { IEmpAssign } from '../../types/empAssign.types'
-import { FilterQuery } from 'mongoose';
+import mongoose, { FilterQuery } from 'mongoose';
 
 
 interface QueryParams {
@@ -17,7 +17,7 @@ interface QueryParams {
 const AddEmpAssign = async (req: Request, res: Response): Promise<Response> => {
     const {
         user_id, 
-        project_id, 
+        // project_id, 
         plan_start_date, 
         plan_end_date, 
         task_id, 
@@ -28,7 +28,7 @@ const AddEmpAssign = async (req: Request, res: Response): Promise<Response> => {
         description
     }: IEmpAssign = req.body
 
-    if (!user_id || !project_id || !task_id || !plan_hour || !working_hours) {
+    if (!user_id || !task_id || !plan_hour || !working_hours) {
         return res.status(400).json({
             success: false,
             error: 'Please fill out all fields'
@@ -65,12 +65,12 @@ const AddEmpAssign = async (req: Request, res: Response): Promise<Response> => {
 
     const empAssign = new EmpAssign({
         user_id, 
-        project_id, 
+        // project_id, 
         plan_start_date, 
         plan_end_date, 
         task_id, 
         plan_hour, 
-        working_hours ,
+        working_hours,
         start_date,
         end_date,
         description
@@ -135,7 +135,7 @@ const getEmpAssign = async (req: Request<{}, {}, {}, QueryParams>, res: Response
         .skip(skip)
         .limit(limitNumber)
         .populate('user_id')
-        .populate('project_id')
+        // .populate('project_id')
         .populate('task_id')
 
         if (!empAssign || empAssign.length === 0) {
@@ -171,7 +171,7 @@ const editEmpAssignyId = async (req: Request, res: Response): Promise<Response> 
 
     const empAssign = await EmpAssign.findById(id)
     .populate('user_id')
-    .populate('project_id')
+    // .populate('project_id')
     .populate('task_id')
 
     if (!empAssign) {
@@ -186,6 +186,62 @@ const editEmpAssignyId = async (req: Request, res: Response): Promise<Response> 
         data: empAssign
     })
 }
+
+const getEmpAssignByIdLimited = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.query as {id?: string };
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid or missing ID parameter',
+      });
+    }
+
+    const empAssign = await EmpAssign.findById(id)
+      .select('working_hours plan_start_date plan_end_date project_id');
+
+    if (!empAssign) {
+      return res.status(404).json({
+        success: false,
+        error: 'No Emp Assign Id found',
+      });
+    }
+
+    const startDate = new Date(empAssign.plan_start_date);
+    const endDate = new Date(empAssign.plan_end_date);
+
+    const diffTime = endDate.getTime() - startDate.getTime();
+    const totalDays = Math.max(
+      Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1,
+      0
+    );
+
+    const totalWorkingHours = totalDays * empAssign.working_hours;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        project_id: empAssign.project_id,
+        plan_start_date: empAssign.plan_start_date,
+        plan_end_date: empAssign.plan_end_date,
+        total_days: totalDays,
+        daily_working_hours: empAssign.working_hours,
+        total_working_hours: totalWorkingHours
+      },
+    });
+
+  } catch (error) {
+    console.error('getEmpAssignByIdLimited error:', error);
+
+    return res.status(500).json({
+      success: false,
+      error: 'Server Error',
+    });
+  }
+};
+
+
 
 const viewEmpAssignById = async (req: Request, res: Response): Promise<Response> => {
    const { id } = req.params
@@ -277,19 +333,22 @@ const updateEmpAssign = async (req: Request, res: Response): Promise<Response> =
 
     const {   
         user_id, 
-        project_id, 
+        // project_id, 
         plan_start_date, 
         plan_end_date, 
         task_id, 
         plan_hour, 
-        working_hours ,
+        working_hours,
         start_date,
         end_date,
-        description, 
+        description,
+        total_days,
+        daily_working_hours,
+        total_working_hours, 
         status 
     }: IEmpAssign = req.body;
 
-    if (!user_id || !project_id || !task_id || !plan_hour || !working_hours) {
+    if (!user_id || !task_id || !plan_hour || !working_hours) {
         return res.status(400).json({
             success: false,
             error: 'fill out all fields'
@@ -300,7 +359,7 @@ const updateEmpAssign = async (req: Request, res: Response): Promise<Response> =
         { _id: id },
         {
             user_id, 
-            project_id, 
+            // project_id, 
             plan_start_date, 
             plan_end_date, 
             task_id, 
@@ -308,7 +367,10 @@ const updateEmpAssign = async (req: Request, res: Response): Promise<Response> =
             working_hours ,
             start_date,
             end_date,
-            description, 
+            description,
+            total_days,
+            daily_working_hours,
+            total_working_hours,  
             status 
         },
         { new: true }
@@ -373,5 +435,6 @@ export {
    viewEmpAssignById,
    empAssignCount,
    deleteEmpAssign,
-   deleteEmpAssigns
+   deleteEmpAssigns,
+   getEmpAssignByIdLimited
 }

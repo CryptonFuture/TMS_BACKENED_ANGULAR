@@ -26,7 +26,7 @@ const projectSchema: Schema = new Schema({
 
     designName: {
         type: String,
-        required: true
+        // required: true
     },
 
     project_manager_id: {
