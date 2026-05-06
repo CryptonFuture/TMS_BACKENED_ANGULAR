@@ -7,7 +7,8 @@ import {
    viewEmpAssignById,
    empAssignCount,
    deleteEmpAssign,
-   deleteEmpAssigns
+   deleteEmpAssigns,
+   getEmpAssignByIdLimited
 } from '../../controllers/employee-assignment/employeeAssignmentController'
 
 const router = express.Router()
@@ -20,5 +21,7 @@ router.get('/viewEmpAssignById/:id', viewEmpAssignById)
 router.get('/empAssignCount', empAssignCount)
 router.delete('/deleteEmpAssign/:id', deleteEmpAssign)
 router.put('/deleteEmpAssigns/:id', deleteEmpAssigns)
+router.get('/emp-assign/limited', getEmpAssignByIdLimited);
+
 
 export default router

@@ -11,12 +11,12 @@ const empAssignSchema: Schema = new Schema({
         required: true
     },
 
-    project_id: {
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Project',
-        default: null,
-        required: true
-    },
+    // project_id: {
+    //     type: mongoose.Schema.Types.ObjectId, 
+    //     ref: 'Project',
+    //     default: null,
+    //     required: true
+    // },
 
     plan_start_date: {
         type: String,

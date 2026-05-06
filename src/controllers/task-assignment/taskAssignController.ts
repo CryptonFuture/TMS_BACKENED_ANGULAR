@@ -16,10 +16,11 @@ interface QueryParams {
 const AddTaskAssign = async (req: Request, res: Response): Promise<Response> => {
     const {
         user_id, 
-        project_id, 
+        // project_id, 
         plan_start_date, 
         plan_end_date, 
         task_id, 
+        client_id,
         plan_hour, 
         working_hours ,
         start_date,
@@ -27,7 +28,7 @@ const AddTaskAssign = async (req: Request, res: Response): Promise<Response> => 
         description
     }: ITaskAssign = req.body
 
-    if (!user_id || !project_id || !task_id || !plan_hour || !working_hours) {
+    if (!user_id || !task_id || !client_id || !plan_hour || !working_hours) {
         return res.status(400).json({
             success: false,
             error: 'Please fill out all fields'
@@ -64,7 +65,8 @@ const AddTaskAssign = async (req: Request, res: Response): Promise<Response> => 
 
     const taskAssign = new TaskAssign({
         user_id, 
-        project_id, 
+        // project_id, 
+        client_id,
         plan_start_date, 
         plan_end_date, 
         task_id, 
@@ -135,8 +137,10 @@ const getTaskAssign = async (req: Request<{}, {}, {}, QueryParams>, res: Respons
         .skip(skip)
         .limit(limitNumber)
         .populate('user_id')
-        .populate('project_id')
+        // .populate('project_id')
         .populate('task_id')
+        .populate('client_id')
+
 
         if (!taskAssign || taskAssign.length === 0) {
             return res.status(404).json({
@@ -171,8 +175,9 @@ const editTaskAssignById = async (req: Request, res: Response): Promise<Response
 
     const taskAssign = await TaskAssign.findById(id)
     .populate('user_id')
-    .populate('project_id')
+    // .populate('project_id')
     .populate('task_id')
+    .populate('client_id')
 
     if (!taskAssign) {
         return res.status(404).json({
@@ -277,7 +282,7 @@ const updateTaskAssign = async (req: Request, res: Response): Promise<Response> 
 
     const {   
         user_id, 
-        project_id, 
+        // project_id, 
         plan_start_date, 
         plan_end_date, 
         task_id, 
@@ -289,7 +294,7 @@ const updateTaskAssign = async (req: Request, res: Response): Promise<Response> 
         status 
     }: ITaskAssign = req.body;
 
-    if (!user_id || !project_id || !task_id || !plan_hour || !working_hours) {
+    if (!user_id || !task_id || !plan_hour || !working_hours) {
         return res.status(400).json({
             success: false,
             error: 'fill out all fields'
@@ -300,7 +305,7 @@ const updateTaskAssign = async (req: Request, res: Response): Promise<Response> 
         { _id: id },
         {
             user_id, 
-            project_id, 
+            // project_id, 
             plan_start_date, 
             plan_end_date, 
             task_id, 

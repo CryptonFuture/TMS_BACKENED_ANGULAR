@@ -1,6 +1,7 @@
 export interface ITaskAssign {
   user_id: string;
   project_id: string
+  client_id: string
   plan_start_date: string;
   plan_end_date: string;
   task_id: string;
